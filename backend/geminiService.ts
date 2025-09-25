@@ -35,7 +35,7 @@ export async function generateIdPhoto(base64ImageData: string, mimeType: string,
     });
 
     const imagePart = response?.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
-    if (imagePart?.inlineData.data) {
+    if (imagePart?.inlineData?.data) {
       return imagePart.inlineData.data;
     }
 
