@@ -1,0 +1,13 @@
+// backend/tsconfig.json
+{
+    "compilerOptions": {
+      "target": "ES2022",
+      "module": "NodeNext",
+      "moduleResolution": "NodeNext",
+      "outDir": "./dist",       // 컴파일된 JS 파일은 backend/dist 폴더에 생성
+      "esModuleInterop": true,
+      "forceConsistentCasingInFileNames": true,
+      "strict": true,
+    },
+    "include": ["./**/*.ts"] // backend 폴더 안의 모든 .ts 파일을 대상으로 함
+  }

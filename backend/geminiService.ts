@@ -1,7 +1,16 @@
 
 import { GoogleGenAI, Modality } from "@google/genai";
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+
+dotenv.config({ path: path.resolve(__dirname, './.env') });
+
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
 
 export async function generateIdPhoto(base64ImageData: string, mimeType: string, prompt: string): Promise<string> {
   try {

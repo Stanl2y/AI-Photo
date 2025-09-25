@@ -1,7 +1,7 @@
 
 import React from 'react';
-import PhotoStudio from './components/PhotoStudio';
-import { CameraIcon } from './components/icons';
+import PhotoStudio from './components/PhotoStudio.tsx';
+import { CameraIcon } from './components/icons.tsx';
 
 const App: React.FC = () => {
   return (

@@ -1,8 +1,10 @@
+// frontend/components/PhotoStudio.tsx
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { generateIdPhoto, generateCartoonIdPhotoFromText } from '../services/geminiService';
-import { DownloadIcon, SparklesIcon, SpinnerIcon, WandIcon } from './icons';
-import { CARTOON_ID_PHOTO_PROMPT } from '../constants';
+import React, { useState, useEffect, useCallback } from 'react';
+// 👈 [수정] geminiService 대신 우리만의 api 서비스를 import 합니다.
+import { generateNewPhoto, refineExistingPhoto } from '../services/api.ts'; 
+import { DownloadIcon, SparklesIcon, SpinnerIcon, WandIcon } from './icons.tsx';
+import { CARTOON_ID_PHOTO_PROMPT } from '../constants.ts';
 
 const LOADING_MESSAGES = [
   'AI가 프롬프트를 분석하고 있습니다...',
@@ -54,7 +56,6 @@ const PhotoStudio: React.FC = () => {
       setError('캐릭터 설명을 입력해주세요.');
       return;
     }
-
     setIsLoading(true);
     setError(null);
     setGeneratedImage(null);
@@ -64,25 +65,24 @@ const PhotoStudio: React.FC = () => {
     try {
       const getAspectRatio = (): '3:4' | '1:1' | '9:16' => {
         switch (sizeOption) {
-          case 'passport':
-            return '3:4';
-          case 'square':
-            return '1:1';
-          case 'profile':
-            return '9:16';
-          default:
-            return '3:4';
+          case 'passport': return '3:4';
+          case 'square': return '1:1';
+          case 'profile': return '9:16';
+          default: return '3:4';
         }
       };
       
       const finalPrompt = CARTOON_ID_PHOTO_PROMPT.replace('{user_prompt}', generationPrompt.trim());
       const aspectRatio = getAspectRatio();
       
-      const newImageBase64 = await generateCartoonIdPhotoFromText(finalPrompt, aspectRatio);
-      setGeneratedImage(`data:image/png;base64,${newImageBase64}`);
+      // 👈 [수정] 백엔드 함수 대신 우리 '웨이터' 함수를 호출합니다.
+      const response = await generateNewPhoto(finalPrompt, aspectRatio);
+      
+      setGeneratedImage(`data:image/png;base64,${response.base64Image}`);
     } catch (err) {
       console.error(err);
-      setError('증명사진 생성에 실패했습니다. 프롬프트를 수정하여 다시 시도해주세요.');
+      const message = err instanceof Error ? err.message : '알 수 없는 오류 발생';
+      setError(`증명사진 생성 실패: ${message}`);
     } finally {
       setIsLoading(false);
     }
@@ -93,18 +93,21 @@ const PhotoStudio: React.FC = () => {
       setError('수정할 사진과 지시사항이 필요합니다.');
       return;
     }
-
     setIsRefining(true);
     setError(null);
 
     try {
       const base64Data = generatedImage.split(',')[1];
-      const newImageBase64 = await generateIdPhoto(base64Data, 'image/png', refinementPrompt);
-      setGeneratedImage(`data:image/png;base64,${newImageBase64}`);
+      
+      // 👈 [수정] 백엔드 함수 대신 우리 '웨이터' 함수를 호출합니다.
+      const response = await refineExistingPhoto(base64Data, 'image/png', refinementPrompt);
+      
+      setGeneratedImage(`data:image/png;base64,${response.base64Image}`);
       setRefinementPrompt('');
     } catch (err) {
       console.error(err);
-      setError('사진 수정에 실패했습니다. 다시 시도해주세요.');
+      const message = err instanceof Error ? err.message : '알 수 없는 오류 발생';
+      setError(`사진 수정 실패: ${message}`);
     } finally {
       setIsRefining(false);
     }
@@ -112,21 +115,16 @@ const PhotoStudio: React.FC = () => {
   
   const getAspectRatioClass = () => {
     switch (sizeOption) {
-      case 'passport':
-        return 'aspect-[3/4]';
-      case 'square':
-        return 'aspect-square';
-      case 'profile':
-        return 'aspect-[9/16]';
-      default:
-        return 'aspect-[3/4]';
+      case 'passport': return 'aspect-[3/4]';
+      case 'square': return 'aspect-square';
+      case 'profile': return 'aspect-[9/16]';
+      default: return 'aspect-[3/4]';
     }
   };
 
-  const generatedPhotoAspectRatioClass = getAspectRatioClass();
-
   return (
     <div className="w-full max-w-4xl mx-auto flex flex-col items-center gap-8">
+      {/* ... 이하 JSX 코드는 그대로 ... */}
       <div className="w-full p-6 bg-white rounded-2xl shadow-lg">
         <fieldset disabled={isLoading || isRefining}>
             <legend className="text-lg font-semibold text-slate-800 mb-4">사진 사이즈 선택</legend>
@@ -155,14 +153,9 @@ const PhotoStudio: React.FC = () => {
             </div>
         </fieldset>
       </div>
-
       <div className="w-full p-6 bg-white rounded-2xl shadow-lg">
-        <h3 className="text-lg font-semibold text-slate-800 mb-2">
-          캐릭터 설명
-        </h3>
-        <p className="text-sm text-slate-500 mb-4">
-          생성하고 싶은 캐릭터를 자세히 설명해주세요. (예: 원피스 스타일의 검은 머리 남자 캐릭터)
-        </p>
+        <h3 className="text-lg font-semibold text-slate-800 mb-2">캐릭터 설명</h3>
+        <p className="text-sm text-slate-500 mb-4">생성하고 싶은 캐릭터를 자세히 설명해주세요. (예: 원피스 스타일의 검은 머리 남자 캐릭터)</p>
         <textarea 
           value={generationPrompt}
           onChange={(e) => setGenerationPrompt(e.target.value)}
@@ -171,27 +164,19 @@ const PhotoStudio: React.FC = () => {
           disabled={isLoading || isRefining}
         />
       </div>
-      
       <button
         onClick={handleGenerate}
         disabled={!generationPrompt.trim() || isLoading || isRefining}
         className="w-full max-w-sm bg-indigo-600 text-white font-bold py-4 px-6 rounded-full hover:bg-indigo-700 disabled:bg-slate-400 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-indigo-500/50 transform hover:scale-105"
       >
         {isLoading ? (
-          <>
-            <SpinnerIcon className="w-5 h-5" />
-            <span>생성 중...</span>
-          </>
+          <><SpinnerIcon className="w-5 h-5" /><span>생성 중...</span></>
         ) : (
-          <>
-            <SparklesIcon className="w-5 h-5" />
-            <span>AI 만화 증명사진 생성</span>
-          </>
+          <><SparklesIcon className="w-5 h-5" /><span>AI 만화 증명사진 생성</span></>
         )}
       </button>
-
       <div className="w-full max-w-lg">
-        <PhotoPanel title="AI 생성 증명사진" aspectRatioClass={generatedPhotoAspectRatioClass}>
+        <PhotoPanel title="AI 생성 증명사진" aspectRatioClass={getAspectRatioClass()}>
           {isLoading && (
             <div className="flex flex-col items-center justify-center h-full text-slate-600 p-4 text-center">
               <SpinnerIcon className="w-12 h-12 mb-4" />
@@ -223,18 +208,12 @@ const PhotoStudio: React.FC = () => {
           )}
         </PhotoPanel>
       </div>
-
       {generatedImage && !isLoading && !isRefining && (
-        <a
-          href={generatedImage}
-          download="AI_Cartoon_ID_Photo.png"
-          className="bg-green-500 text-white font-bold py-3 px-6 rounded-full hover:bg-green-600 transition-colors duration-200 flex items-center gap-2 shadow-lg hover:shadow-green-500/50"
-        >
+        <a href={generatedImage} download="AI_Cartoon_ID_Photo.png" className="bg-green-500 text-white font-bold py-3 px-6 rounded-full hover:bg-green-600 transition-colors duration-200 flex items-center gap-2 shadow-lg hover:shadow-green-500/50">
           <DownloadIcon className="w-5 h-5" />
           <span>사진 다운로드</span>
         </a>
       )}
-
       {generatedImage && !isLoading && !isRefining && (
         <div className="w-full p-6 bg-white rounded-2xl shadow-lg">
           <h3 className="text-lg font-semibold text-slate-800 mb-3 text-center">AI에게 추가 수정 요청하기</h3>
