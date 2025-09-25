@@ -85,8 +85,13 @@ export async function generateCartoonIdPhotoFromText(
         },
     });
 
+        // 수정 후
     if (response.generatedImages && response.generatedImages.length > 0) {
-      return response.generatedImages[0].image.imageBytes;
+      const firstImage = response.generatedImages[0];
+      // .image 속성과 .image.imageBytes 속성이 모두 존재하는지 추가로 확인
+      if (firstImage && firstImage.image && firstImage.image.imageBytes) {
+        return firstImage.image.imageBytes;
+      }
     }
 
     // Fix: Removed check for `promptFeedback` as it does not exist on the `GenerateImagesResponse` type.
