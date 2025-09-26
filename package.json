@@ -9,8 +9,8 @@
     "dev:frontend": "vite frontend",
     "dev:backend": "tsx --watch backend/server.ts",
     "//--- 빌드용 (Build) ---//": "---",
-    "build": "npm run build:backend && npm run build:frontend",
-    "build:frontend": "vite build frontend",
+    "build": "npm run build:frontend",
+    "build:frontend": "cd frontend && vite build",
     "build:backend": "tsc -p ./backend/tsconfig.json",
     "//--- 프로덕션 실행용 (Production Start) ---//": "---",
     "start": "node backend/dist/server.js"
