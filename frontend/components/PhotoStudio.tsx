@@ -76,9 +76,9 @@ const PhotoStudio: React.FC = () => {
       const aspectRatio = getAspectRatio();
       
       // 👈 [수정] 백엔드 함수 대신 우리 '웨이터' 함수를 호출합니다.
-      const response = await generateNewPhoto(finalPrompt, aspectRatio);
+      const imageData = await generateNewPhoto(finalPrompt, aspectRatio);
       
-      setGeneratedImage(`data:image/png;base64,${response.base64Image}`);
+      setGeneratedImage(`data:${imageData.mimeType};base64,${imageData.base64Image}`);
     } catch (err) {
       console.error(err);
       const message = err instanceof Error ? err.message : '알 수 없는 오류 발생';
@@ -100,9 +100,9 @@ const PhotoStudio: React.FC = () => {
       const base64Data = generatedImage.split(',')[1];
       
       // 👈 [수정] 백엔드 함수 대신 우리 '웨이터' 함수를 호출합니다.
-      const response = await refineExistingPhoto(base64Data, 'image/png', refinementPrompt);
+      const imageData = await refineExistingPhoto(base64Data, 'image/png', refinementPrompt);
       
-      setGeneratedImage(`data:image/png;base64,${response.base64Image}`);
+      setGeneratedImage(`data:${imageData.mimeType};base64,${imageData.base64Image}`);
       setRefinementPrompt('');
     } catch (err) {
       console.error(err);

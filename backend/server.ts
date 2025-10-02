@@ -5,6 +5,21 @@ import type { Request, Response } from 'express';
 import cors from 'cors';
 import { generateIdPhoto, generateCartoonIdPhotoFromText } from './geminiService.js';
 
+type ApiResponse<T> = {
+  success: boolean;
+  data: T;
+  message?: string;
+};
+
+type ImageGenerationPayload = {
+  base64Image: string;
+  base64Length: number;
+  mimeType: string;
+  prompt: string;
+  aspectRatio?: '1:1' | '3:4' | '9:16';
+  generatedAt: string;
+};
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -34,8 +49,24 @@ app.post('/api/generate-cartoon', async (req: Request, res: Response) => {
       return res.status(400).json({ error: '프롬프트와 비율이 필요합니다.' });
     }
     const resultBase64 = await generateCartoonIdPhotoFromText(prompt, aspectRatio);
-    console.log('generate-cartoon 응답 길이:', resultBase64.length);
-    res.status(200).json({ success: true, base64Image: resultBase64 });
+    const responsePayload: ApiResponse<ImageGenerationPayload> = {
+      success: true,
+      data: {
+        base64Image: resultBase64,
+        base64Length: resultBase64.length,
+        mimeType: 'image/png',
+        prompt,
+        aspectRatio,
+        generatedAt: new Date().toISOString(),
+      },
+      message: '만화 증명사진 생성이 완료되었습니다.',
+    };
+    console.log('generate-cartoon 응답 정보:', {
+      base64Length: responsePayload.data.base64Length,
+      mimeType: responsePayload.data.mimeType,
+      aspectRatio: responsePayload.data.aspectRatio,
+    });
+    res.status(200).json(responsePayload);
   } catch (error) {
     const message = error instanceof Error ? error.message : '알 수 없는 오류';
     res.status(500).json({ success: false, error: message });
@@ -51,8 +82,22 @@ app.post('/api/generate-id-photo', async (req: Request, res: Response) => {
       return res.status(400).json({ error: '이미지, 타입, 프롬프트가 필요합니다.' });
     }
     const resultBase64 = await generateIdPhoto(base64ImageData, mimeType, prompt);
-    console.log('generate-id-photo 응답 길이:', resultBase64.length);
-    res.status(200).json({ success: true, base64Image: resultBase64 });
+    const responsePayload: ApiResponse<ImageGenerationPayload> = {
+      success: true,
+      data: {
+        base64Image: resultBase64,
+        base64Length: resultBase64.length,
+        mimeType,
+        prompt,
+        generatedAt: new Date().toISOString(),
+      },
+      message: '증명사진 수정이 완료되었습니다.',
+    };
+    console.log('generate-id-photo 응답 정보:', {
+      base64Length: responsePayload.data.base64Length,
+      mimeType: responsePayload.data.mimeType,
+    });
+    res.status(200).json(responsePayload);
   } catch (error) {
     const message = error instanceof Error ? error.message : '알 수 없는 오류';
     res.status(500).json({ success: false, error: message });
