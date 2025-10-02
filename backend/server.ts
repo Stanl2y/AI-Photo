@@ -62,6 +62,7 @@ app.post('/api/generate-cartoon', async (req: Request, res: Response) => {
       message: '만화 증명사진 생성이 완료되었습니다.',
     };
     console.log('generate-cartoon 응답 정보:', {
+      base64 : responsePayload.data.base64Image,
       base64Length: responsePayload.data.base64Length,
       mimeType: responsePayload.data.mimeType,
       aspectRatio: responsePayload.data.aspectRatio,
