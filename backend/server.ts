@@ -18,6 +18,7 @@ app.get('/', (req: Request, res: Response) => {
 // 1. 텍스트로 새 이미지 생성
 app.post('/api/generate-cartoon', async (req: Request, res: Response) => {
   try {
+    console.log('generate-cartoon:',req.body);
     const { prompt, aspectRatio } = req.body;
     if (!prompt || !aspectRatio) {
       return res.status(400).json({ error: '프롬프트와 비율이 필요합니다.' });
@@ -33,6 +34,7 @@ app.post('/api/generate-cartoon', async (req: Request, res: Response) => {
 // 2. 이미지와 텍스트로 수정
 app.post('/api/generate-id-photo', async (req: Request, res: Response) => {
   try {
+    
     const { base64ImageData, mimeType, prompt } = req.body;
     if (!base64ImageData || !mimeType || !prompt) {
       return res.status(400).json({ error: '이미지, 타입, 프롬프트가 필요합니다.' });
